@@ -1,18 +1,39 @@
-name: Docker Image CI
+name: Build and Push Docker Image
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches:
+      - main  # 只在推送到 main 分支时触发（根据需要修改）
 
 jobs:
-
   build:
-
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # 使用最新的 Ubuntu 环境
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+    - name: Checkout code
+      uses: actions/checkout@v3  # 检出代码
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2  # 设置 Docker Buildx，支持跨平台构建
+
+    - name: Cache Docker layers
+      uses: actions/cache@v3
+      with:
+        path: /tmp/.buildx-cache  # 缓存 Docker 构建的层，提高构建速度
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2  # 登录 Docker Hub
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build Docker image
+      run: |
+        docker build -t narapeka/blurayposter:${{ github.sha }} .  # 使用 commit hash 作为标签
+
+    - name: Push Docker image to Docker Hub
+      run: |
+        docker push narapeka/blurayposter:${{ github.sha }}  # 推送镜像到 Docker Hub
