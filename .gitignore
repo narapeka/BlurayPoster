@@ -1,0 +1,22 @@
+# 忽略 pycache 目录
+__pycache__/
+
+# 忽略 Python 编译文件
+*.pyc
+*.pyo
+*.pyd
+
+# 忽略虚拟环境目录
+venv/
+env/
+.venv/
+
+# 忽略 IDE 和编辑器产生的配置文件
+.vscode/
+.idea/
+
+# 忽略其他常见的临时文件
+*.log
+*.bak
+*.swp
+.DS_Store
