@@ -1,5 +1,6 @@
 # FileCatcher
-Fork自@whitebrise/BlurayPoster，感谢原作者。
+Fork自[whitebrise/BlurayPoster](https://github.com/whitebrise/BlurayPoster)，感谢原作者。
+
 FileCatcher是一个基于HTTP通知的BlurayPoster扩展，它通过 Flask 提供 HTTP 服务，允许外部设备通过联动FileWatcher触发播放请求。
 
 ## 支持设备
@@ -13,13 +14,27 @@ FileCatcher是一个基于HTTP通知的BlurayPoster扩展，它通过 Flask 提�
 4. FileCatcher接收通知，利用BlurayPoster提供的功能，自动调用蓝光机播放电影（并同时停止在原多珀或者芝杜设备上的播放）
 
 ## 如何使用
-1. 请参阅FileWatcher项目，安装，配置并运行FileWatcher
-   https://github.com/narapeka/FileWatcher
-
-2. 安装带有fileCatcher扩展的BlurayPoster，建议docker方式：
-   
+1. 请参阅FileWatcher项目，安装，配置并运行[FileWatcher](https://github.com/narapeka/FileWatcher)
+2. 安装带有FileCatcher扩展的BlurayPoster，建议docker方式，镜像narapeka/blurayposter：
+```bash
+docker run -itd \
+    --name blurayposter \
+    --log-driver=json-file \
+    --log-opt max-size=2m \
+    --log-opt max-file=7 \
+    --hostname blurayposter \
+    -v /blurayposter/config:/config \
+    -e 'PUID=0' \
+    -e 'PGID=0' \
+    -e 'UMASK=000' \
+    -e 'TZ=Asia/Shanghai' \
+    --restart unless-stopped \
+    narapeka/blurayposter:latest
+```
 
 ## 配置说明
+参阅本项目config/config.yaml文件。
+
 仅需更改媒体库配置，删除emby相关所有配置，并替换为FileCatcher
 
 ```yaml
