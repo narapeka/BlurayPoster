@@ -12,6 +12,13 @@ FileCatcher是一个基于HTTP通知的BlurayPoster扩展，它通过 Flask 提�
 3. FileWatcher发送HTTP通知给FileCatcher，传递电影文件路径 ->
 4. FileCatcher接收通知，利用BlurayPoster提供的功能，自动调用蓝光机播放电影（并同时停止在原多珀或者芝杜设备上的播放）
 
+## 如何使用
+1. 请参阅FileWatcher项目，安装，配置并运行FileWatcher
+   https://github.com/narapeka/FileWatcher
+
+2. 安装带有fileCatcher扩展的BlurayPoster，建议docker方式：
+   
+
 ## 配置说明
 仅需更改媒体库配置，删除emby相关所有配置，并替换为FileCatcher
 
