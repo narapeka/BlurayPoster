@@ -15,8 +15,9 @@ FileCatcher是一个基于HTTP通知的BlurayPoster扩展，它通过 Flask 提�
 4. FileCatcher接收通知，利用BlurayPoster提供的功能，自动调用蓝光机播放电影（并同时停止在原多珀或者芝杜设备上的播放）
 
 ## 如何使用
-1. 请参阅FileWatcher项目，安装，配置并运行[FileWatcher](https://github.com/narapeka/FileWatcher)
-2. 安装带有FileCatcher扩展的BlurayPoster，建议docker方式，镜像narapeka/blurayposter：
+1. 环境准备：运行Linux正规发行版(推荐Ubuntu/Debian)的amd64架构小主机或者NAS一台
+2. 参阅FileWatcher项目，安装，配置并运行[FileWatcher](https://github.com/narapeka/FileWatcher)
+3. 安装带有FileCatcher扩展的BlurayPoster，建议docker方式，镜像narapeka/blurayposter：
 ```bash
 docker run -itd \
     --name blurayposter \
@@ -32,6 +33,17 @@ docker run -itd \
     --restart unless-stopped \
     narapeka/blurayposter:latest
 ```
+4. 配置BlurayPoster (见以下配置说明)
+5. 首次运行，请注册小主机/NAS为 doopoo X3 信任设备：
+```bash
+curl --request GET \
+  --url 'http://<盒子ip>:9527/doopoo/connect?uniqueId=any&from=any&ip=<小主机ip>'
+```
+或者用浏览器打开URL：
+```url
+http://<盒子ip>:9527/doopoo/connect?uniqueId=any&from=pc&ip=<小主机ip>
+```
+运行后X3设备上会弹出确认框，**点击确认**。
 
 ## 配置说明
 参阅本项目config/config.yaml文件。
@@ -52,7 +64,7 @@ Media:
   # 在doopoo或者zidoo设备的海报墙中，播放影片开始后，FileWatcher将监测到该播放事件，并启用FileCatcher调用蓝光机播放
   # 在蓝光机开始播放后，我们需要通知doopoo或者zidoo设备停止播放同一文件
   # doopoo配置
-  PlayStopNotifyUrl: "http://<ip>:9527/doopoo/sendKey?action=KEYCODE_MEDIA_STOP&from=pc&keyValue=86"
+  PlayStopNotifyUrl: "http://<ip>:9527/doopoo/sendKey?action=KEYCODE_MEDIA_STOP&from=any&keyValue=86"
   PlayStopNotifyMethod: "GET"
 
   # zidoo配置
