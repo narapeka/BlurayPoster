@@ -66,7 +66,15 @@ class FileCatcher(Media):
     def _send_play_stop_notification(self):
         """ 根据配置的 HTTP 方法（GET/POST）发送播放停止通知 """
         headers = {"Content-Type": "application/json"}
-        data = {"message": "stop"}  # 你可以在这里添加更多 POST 请求体的内容
+        # for kodi/coreelec only
+        data = {
+            "jsonrpc": "2.0",
+            "method": "Player.Stop",
+            "params": {
+                "playerid": 1
+            },
+            "id": 1
+        }
 
         if self.notify_method == "GET":
             return requests.get(self.notify_url, timeout=3)

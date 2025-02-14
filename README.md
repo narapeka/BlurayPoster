@@ -40,6 +40,8 @@ docker run -itd \
 参见以下配置说明。配置完成后重启BlurayPoster
 
 ### 4. 设备注册
+
+#### 4.1 Doopoo X3
 首次运行，请注册小主机/NAS为 doopoo X3 的信任设备，两种方式：
 ```bash
 curl --request GET \
@@ -50,6 +52,8 @@ curl --request GET \
 http://<盒子ip>:9527/doopoo/connect?uniqueId=any&from=pc&ip=<小主机ip>
 ```
 运行后X3设备上会弹出确认框，**点击确认**。
+
+#### 4.2 其他设备首次连接，是否需要信任握手，未经测试。有条件的请自行测试并提交issue。
 
 ### 5. 安装FileWatcher
 在小主机/NAS上安装FileWatcher项目
@@ -88,13 +92,22 @@ Media:
   # 配置停止播放通知端点
   # 在doopoo或者zidoo设备的海报墙中，播放影片开始后，FileWatcher将监测到该播放事件，并启用FileCatcher调用蓝光机播放
   # 在蓝光机开始播放后，我们需要通知doopoo或者zidoo设备停止播放同一文件
+  
   # doopoo配置
-  PlayStopNotifyUrl: "http://<盒子ip>:9527/doopoo/sendKey?action=KEYCODE_MEDIA_STOP&from=any&keyValue=86"
+  PlayStopNotifyUrl: "http://<ip>:9527/doopoo/sendKey?action=KEYCODE_MEDIA_STOP&from=pc&keyValue=86"
   PlayStopNotifyMethod: "GET"
 
   # zidoo配置
-  # PlayStopNotifyUrl: "http://<盒子ip>:9529/VideoPlay/changeStatus?status=-1"
+  # PlayStopNotifyUrl: "http://<ip>:9529/VideoPlay/changeStatus?status=-1"
   # PlayStopNotifyMethod: "POST"
+
+  # kodi/coreelec配置 (在kodi/coreelec中先开启web服务，并关闭web登录验证)
+  # PlayStopNotifyUrl: "http://<ip>:8080/jsonrpc"
+  # PlayStopNotifyMethod: "POST"
+
+  # dune配置
+  # PlayStopNotifyUrl: "http://<ip>:8080/cgi-bin/do?cmd=ir_code&ir_code=stop"
+  # PlayStopNotifyMethod: "GET"
 ```
 
 配置文件路径映射时：
