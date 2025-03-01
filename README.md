@@ -87,21 +87,12 @@ http://<盒子ip>:9527/doopoo/connect?uniqueId=any&from=any&ip=<小主机ip>
 ### 5. 安装FileWatcher
 在小主机/NAS上安装FileWatcher项目
 
-配置参考：https://github.com/narapeka/FileWatcher
+安装说明：https://github.com/narapeka/FileWatcher
 
 注意事项:
 - http_server指向安装了BlurayPoster的小主机/NAS，即192.168.1.50
 - 盒子海报墙请禁用自动刷新/自动更新设备之类，避免访问文件系统导致误拉起蓝光机。
 - 同理，**刮削时请停止FileWatcher服务**。关闭方法参见FileWatcher项目说明。
-
-关闭FileWatcher服务
-```bash
-sudo systemctl stop filewatcher
-```
-启动FileWatcher服务
-```bash
-sudo systemctl start filewatcher
-```
 
 ## 配置说明
 参阅本项目config/config.yaml文件。
@@ -144,6 +135,7 @@ Media:
 源路径为FileWatcher监控的目录之完整路径，也就是盒子海报墙刮削时使用的路径。
 
 目标路径为蓝光机能访问的SMB路径 (参见原BlurayPoster项目说明)
+
 ```yaml
   # 文件夹映射路径(不用的协议路径值可以留空)
   # 文件最后有路径配置说明, pioneer请参照 pioneer部分
