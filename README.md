@@ -21,13 +21,15 @@ FileCatcher是一个基于HTTP通知的BlurayPoster扩展，它通过 Flask 提�
 
 ### 2. 安装本项目
 在小主机/NAS上安装本项目 (带有FileCatcher扩展的BlurayPoster)，建议docker方式，镜像narapeka/blurayposter：
+
+docker-cli
 ```bash
 docker run -itd \
     --name blurayposter \
     --log-driver=json-file \
     --log-opt max-size=2m \
     --log-opt max-file=7 \
-    --hostname blurayposter \
+    --network host \
     -v /blurayposter/config:/config \
     -e 'PUID=0' \
     -e 'PGID=0' \
@@ -36,6 +38,33 @@ docker run -itd \
     --restart unless-stopped \
     narapeka/blurayposter:latest
 ```
+docker compose
+```yml
+version: '3.8'
+
+services:
+    blurayposter:
+        image: narapeka/blurayposter:latest
+        container_name: blurayposter
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "2m"
+                max-file: "7"
+        volumes:
+            - /blurayposter/config:/config
+        environment:
+            - 'PUID=0'
+            - 'PGID=0'
+            - 'UMASK=000'
+            - 'TZ=Asia/Shanghai'
+        network_mode: host
+        restart: unless-stopped
+        tty: true
+        stdin_open: true
+```
+**注意：必须采用host模式安装。**
+
 ### 3. 配置本项目
 参见以下配置说明。配置完成后重启BlurayPoster
 
@@ -49,7 +78,7 @@ curl --request GET \
 ```
 或用浏览器打开URL：
 ```url
-http://<盒子ip>:9527/doopoo/connect?uniqueId=any&from=pc&ip=<小主机ip>
+http://<盒子ip>:9527/doopoo/connect?uniqueId=any&from=any&ip=<小主机ip>
 ```
 运行后X3设备上会弹出确认框，**点击确认**。
 
@@ -63,7 +92,7 @@ http://<盒子ip>:9527/doopoo/connect?uniqueId=any&from=pc&ip=<小主机ip>
 注意事项:
 - http_server指向安装了BlurayPoster的小主机/NAS，即192.168.1.50
 - 盒子海报墙请禁用自动刷新/自动更新设备之类，避免访问文件系统导致误拉起蓝光机。
-- 同理，刮削时请停止FileWatcher服务或者关闭蓝光机
+- 同理，**刮削时请停止FileWatcher服务**。关闭方法参见FileWatcher项目说明。
 
 关闭FileWatcher服务
 ```bash
@@ -94,7 +123,7 @@ Media:
   # 在蓝光机开始播放后，我们需要通知doopoo或者zidoo设备停止播放同一文件
   
   # doopoo配置
-  PlayStopNotifyUrl: "http://<ip>:9527/doopoo/sendKey?action=KEYCODE_MEDIA_STOP&from=pc&keyValue=86"
+  PlayStopNotifyUrl: "http://<ip>:9527/doopoo/sendKey?action=KEYCODE_MEDIA_STOP&from=any&keyValue=86"
   PlayStopNotifyMethod: "GET"
 
   # zidoo配置

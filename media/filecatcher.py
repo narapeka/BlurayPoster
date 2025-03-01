@@ -11,7 +11,7 @@ class FileCatcher(Media):
         super().__init__(player, tv, av, config)
         try:
             # 读取配置
-            self.http_port = config.get("HttpPort", 8080)
+            self.http_port = config.get("HttpPort", 7507)
             self.notify_url = config.get("PlayStopNotifyUrl")
             self.notify_method = config.get("PlayStopNotifyMethod", "GET").upper()
             self.app = Flask(__name__)
