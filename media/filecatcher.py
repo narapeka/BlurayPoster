@@ -6,6 +6,8 @@ from abstract_classes import Media, MediaException
 
 logger = logging.getLogger(__name__)
 
+BD_SUFFIX = ".bluray"
+
 class FileCatcher(Media):
     def __init__(self, player, tv, av, config: dict):
         super().__init__(player, tv, av, config)
@@ -43,10 +45,19 @@ class FileCatcher(Media):
                         logger.error(f"Failed to send notification: {str(e)}")
                         # 即使通知失败，也应继续执行播放
 
+                # 获取bdmv路径
+                if file_path.endswith(BD_SUFFIX):
+                    media_path = file_path[:-len(BD_SUFFIX)]
+                    media_path = media_path.rstrip('/')
+                    media_container = "bluray"
+                else:
+                    media_path = file_path
+                    media_container = file_path.split('.')[-1]
+
                 # 调用播放器播放
                 play_result = self._player.play(
-                    media_path=file_path,
-                    container=file_path.split('.')[-1],  # 从路径获取容器格式
+                    media_path=media_path,
+                    container=media_container,
                     on_message=self.on_message,
                     on_play_begin=self.on_play_begin,
                     on_play_in_progress=self.on_play_in_progress,
