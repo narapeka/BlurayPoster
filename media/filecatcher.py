@@ -16,6 +16,8 @@ class FileCatcher(Media):
             self.http_port = config.get("HttpPort", 7507)
             self.notify_url = config.get("PlayStopNotifyUrl")
             self.notify_method = config.get("PlayStopNotifyMethod", "GET").upper()
+            self.callback_url = None
+
             self.app = Flask(__name__)
             self._setup_routes()
             
@@ -30,11 +32,29 @@ class FileCatcher(Media):
         @self.app.route('/play', methods=['POST'])
         def handle_play():
             try:
+                # 获取callback url
+                client_ip = request.remote_addr
+                logger.info(f"Received play request from {client_ip}")
+                if client_ip:
+                    self.callback_url = f"http://{client_ip}:7503/toggle_service"
+
                 # 获取请求的 JSON 数据
                 data = request.get_json()
                 file_path = data.get("file_path")
                 if not file_path:
                     return jsonify({"status": "error", "message": "Missing file_path"}), 400
+
+                # 暂停filewatcher服务
+                if self.callback_url:
+                    data = {
+                        "serviceName": "filewatcher",
+                        "action": "stop"
+                    }
+                    try:
+                        response = requests.post(self.callback_url, data=data)
+                        logger.info(f"Sent request to stop filewatcher service, response: {response.status_code}")
+                    except Exception as e:
+                        logger.error(f"Failed to stop filewatcher service: {str(e)}")
 
                 # 通知外部设备停止播放
                 if self.notify_url:
@@ -63,12 +83,6 @@ class FileCatcher(Media):
                     on_play_in_progress=self.on_play_in_progress,
                     on_play_end=self.on_play_end
                 )
-                logger.info(f"Play result: {play_result}")
-                
-                if play_result:
-                    return jsonify({"status": "success"})
-                else:
-                    return jsonify({"status": "error", "message": "Playback failed"}), 500
 
             except Exception as e:
                 logger.error(f"Play failed: {str(e)}")
@@ -100,6 +114,7 @@ class FileCatcher(Media):
         self.app.run(host='0.0.0.0', port=self.http_port)
 
     def on_play_end(self, **kwargs):
+
         # 通知av,tv
         if self._tv is not None:
             try:
@@ -111,6 +126,18 @@ class FileCatcher(Media):
                 self._av.play_end(self.on_message)
             except Exception as e:
                 logger.error(f"Exception during av play end: {e}")
+
+        # 重新启动filewatcher服务，为下次播放做准备
+        if self.callback_url:
+            data = {
+                "serviceName": "filewatcher",
+                "action": "start"
+            }
+            try:
+                response = requests.post(self.callback_url, data=data)
+                logger.info(f"Sent request to start filewatcher service, response: {response.status_code}")
+            except Exception as e:
+                logger.error(f"Failed to start filewatcher service: {str(e)}")
 
     # 其他必须实现的抽象方法（根据abstract_classes.Media要求）
     def start_before(self, **kwargs):

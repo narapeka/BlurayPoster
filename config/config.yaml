@@ -23,7 +23,7 @@ Media:
   # 在蓝光机开始播放后，我们需要通知doopoo或者zidoo设备停止播放同一文件
 
   # doopoo配置
-  PlayStopNotifyUrl: "http://<ip>:9527/doopoo/sendKey?action=KEYCODE_MEDIA_STOP&from=pc&keyValue=86"
+  PlayStopNotifyUrl: "http://<ip>:9527/doopoo/sendKey?action=KEYCODE_MEDIA_STOP&from=any&keyValue=86"
   PlayStopNotifyMethod: "GET"
 
   # zidoo配置
