@@ -11,32 +11,14 @@ LogLevel: info
 
 # 媒体库配置
 Media:
-  # 使用FileCatcher媒体库
-  # 请预先安装和配置FileWatcher
-  # https://github.com/narapeka/FileWatcher
+  # 使用芝杜海报墙媒体库
+  # 请预先安装和配置ZidooWatcher
+  # https://github.com/narapeka/ZidooWatcher
+
+  # 或者使用多珀海报墙媒体库
+  # 请预先安装和配置ADBWatcher
+  # https://github.com/narapeka/ADBWatcher
   Executor: media.filecatcher.FileCatcher
-  # HTTP服务端口，确保与FileWatcher中配置的端口一致
-  HttpPort: 7507
-
-  # 配置停止播放通知端点
-  # 在doopoo或者zidoo设备的海报墙中，播放影片开始后，FileWatcher将监测到该播放事件，并启用FileCatcher调用蓝光机播放
-  # 在蓝光机开始播放后，我们需要通知doopoo或者zidoo设备停止播放同一文件
-
-  # doopoo配置
-  PlayStopNotifyUrl: "http://<ip>:9527/doopoo/sendKey?action=KEYCODE_MEDIA_STOP&from=any&keyValue=86"
-  PlayStopNotifyMethod: "GET"
-
-  # zidoo配置
-  # PlayStopNotifyUrl: "http://<ip>:9529/VideoPlay/changeStatus?status=-1"
-  # PlayStopNotifyMethod: "POST"
-
-  # kodi/coreelec配置
-  # PlayStopNotifyUrl: "http://<ip>:8080/jsonrpc"
-  # PlayStopNotifyMethod: "POST"
-
-  # dune配置
-  # PlayStopNotifyUrl: "http://<ip>:8080/cgi-bin/do?cmd=ir_code&ir_code=stop"
-  # PlayStopNotifyMethod: "GET"
 
 
 # 播放器配置
@@ -78,10 +60,10 @@ Player:
   # 文件夹映射路径(不用的协议路径值可以留空)
   # 文件最后有路径配置说明, pioneer请参照 pioneer部分
   MappingPath:
-    - Media: /path1 # FileWatcher监控的目录，确保与FileWatcher中配置的目录一致
+    - Media: /path1 # Watcher监控的目录，确保与Watcher中配置的目标路径一致
       SMB: /smb_host1
       NFS: /192.168.1.10/path1
-    - Media: /path2 # FileWatcher监控的目录，确保与FileWatcher中配置的目录一致
+    - Media: /path2 # Watcher监控的目录，确保与Watcher中配置的目标路径一致
       SMB: /smb_host2
       NFS: /192.168.1.10/path2
 

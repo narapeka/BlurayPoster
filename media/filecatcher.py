@@ -6,18 +6,12 @@ from abstract_classes import Media, MediaException
 
 logger = logging.getLogger(__name__)
 
-BD_SUFFIX = ".bluray"
-
 class FileCatcher(Media):
     def __init__(self, player, tv, av, config: dict):
         super().__init__(player, tv, av, config)
         try:
             # 读取配置
-            self.http_port = config.get("HttpPort", 7507)
-            self.notify_url = config.get("PlayStopNotifyUrl")
-            self.notify_method = config.get("PlayStopNotifyMethod", "GET").upper()
-            self.callback_url = None
-
+            self.http_port = 7507
             self.app = Flask(__name__)
             self._setup_routes()
             
@@ -32,11 +26,6 @@ class FileCatcher(Media):
         @self.app.route('/play', methods=['POST'])
         def handle_play():
             try:
-                # 获取callback url
-                client_ip = request.remote_addr
-                logger.info(f"Received play request from {client_ip}")
-                if client_ip:
-                    self.callback_url = f"http://{client_ip}:7503/toggle_service"
 
                 # 获取请求的 JSON 数据
                 data = request.get_json()
@@ -44,35 +33,16 @@ class FileCatcher(Media):
                 if not file_path:
                     return jsonify({"status": "error", "message": "Missing file_path"}), 400
 
-                # 暂停filewatcher服务
-                if self.callback_url:
-                    data = {
-                        "serviceName": "filewatcher",
-                        "action": "stop"
-                    }
-                    try:
-                        response = requests.post(self.callback_url, data=data)
-                        logger.info(f"Sent request to stop filewatcher service, response: {response.status_code}")
-                    except Exception as e:
-                        logger.error(f"Failed to stop filewatcher service: {str(e)}")
-
-                # 通知外部设备停止播放
-                if self.notify_url:
-                    try:
-                        response = self._send_play_stop_notification()
-                        logger.info(f"Sent playback stop notification to {self.notify_url}, response: {response.status_code}")
-                    except Exception as e:
-                        logger.error(f"Failed to send notification: {str(e)}")
-                        # 即使通知失败，也应继续执行播放
-
-                # 获取bdmv路径
-                if file_path.endswith(BD_SUFFIX):
-                    media_path = file_path[:-len(BD_SUFFIX)]
-                    media_path = media_path.rstrip('/')
-                    media_container = "bluray"
-                else:
+                # 判断是文件还是目录
+                import os
+                if os.path.splitext(file_path)[1]:  # 有扩展名，是文件
                     media_path = file_path
                     media_container = file_path.split('.')[-1]
+                    logger.info(f"Processing file: {file_path}, container: {media_container}")
+                else:  # 无扩展名，是目录（BDMV）
+                    media_path = file_path.rstrip('/')
+                    media_container = "bluray"
+                    logger.info(f"Processing BDMV directory: {file_path}, container: {media_container}")
 
                 # 调用播放器播放
                 play_result = self._player.play(
@@ -84,30 +54,12 @@ class FileCatcher(Media):
                     on_play_end=self.on_play_end
                 )
 
+                # 返回成功响应
+                return jsonify({"status": "success", "message": "Play request sent successfully"}), 200
+
             except Exception as e:
                 logger.error(f"Play failed: {str(e)}")
                 return jsonify({"status": "error", "message": str(e)}), 500
-
-    def _send_play_stop_notification(self):
-        """ 根据配置的 HTTP 方法（GET/POST）发送播放停止通知 """
-        headers = {"Content-Type": "application/json"}
-        # for kodi/coreelec only
-        data = {
-            "jsonrpc": "2.0",
-            "method": "Player.Stop",
-            "params": {
-                "playerid": 1
-            },
-            "id": 1
-        }
-
-        if self.notify_method == "GET":
-            return requests.get(self.notify_url, timeout=3)
-        elif self.notify_method == "POST":
-            return requests.post(self.notify_url, json=data, headers=headers, timeout=3)
-        else:
-            logger.warning(f"Invalid notify method: {self.notify_method}, defaulting to GET")
-            return requests.get(self.notify_url, timeout=3)
 
     def _run_server(self):
         # 启动 Flask 服务器
@@ -126,18 +78,6 @@ class FileCatcher(Media):
                 self._av.play_end(self.on_message)
             except Exception as e:
                 logger.error(f"Exception during av play end: {e}")
-
-        # 重新启动filewatcher服务，为下次播放做准备
-        if self.callback_url:
-            data = {
-                "serviceName": "filewatcher",
-                "action": "start"
-            }
-            try:
-                response = requests.post(self.callback_url, data=data)
-                logger.info(f"Sent request to start filewatcher service, response: {response.status_code}")
-            except Exception as e:
-                logger.error(f"Failed to start filewatcher service: {str(e)}")
 
     # 其他必须实现的抽象方法（根据abstract_classes.Media要求）
     def start_before(self, **kwargs):
