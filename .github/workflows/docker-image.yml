@@ -35,9 +35,19 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Build Docker image
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: |
+          narapeka/blurayposter:${{ env.VERSION }}
+          narapeka/blurayposter:latest
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+    - name: Move cache
       run: |
-        docker build -t narapeka/blurayposter:$VERSION .
-        docker tag narapeka/blurayposter:$VERSION narapeka/blurayposter:latest
-        docker push narapeka/blurayposter:$VERSION
-        docker push narapeka/blurayposter:latest
+        rm -rf /tmp/.buildx-cache
+        mv /tmp/.buildx-cache-new /tmp/.buildx-cache
