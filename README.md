@@ -100,6 +100,11 @@ http://<盒子ip>:9527/doopoo/connect?uniqueId=any&from=any&ip=<小主机ip>
 
 仅需更改媒体库配置，删除emby相关所有配置，并替换为FileCatcher
 
+### 4.1 配置文件路径
+- 默认docker配置文件路径为/blurayposter/config/config.yaml
+- 默认源码安装配置文件路径为解压目录下的config/config.yaml
+- 默认配置文件一般如下
+
 ```yaml
 # 媒体库配置
 Media:
@@ -148,3 +153,41 @@ Media:
       SMB: /smb_host2
       NFS: /192.168.1.10/path2
 ```
+```
+
+### 5. 重新启动服务
+服务可以24h启动，只要你修改过本软件的配置文件，就需要重启程序。其他不涉及到本软件代码层面的操作，比如开关播放器、电视、功放、海报墙等操作不需要重启服务。建议装在能24h运行的设备上, 比如nas等。
+
+###### docker
+```
+docker restart blurayposter
+```
+
+###### Linux
+```linux
+cd /home/{your user}/BlurayPoster
+nohup python bluray_poster.py > /dev/null 2>&1 &
+```
+
+###### Windows
+```windows
+双击 bluray_poster.py 启动
+保持服务运行可以加入到开机自启列表或者就不关机
+```
+
+### 6. 开始享受海报墙吧
+- 先打开播放器, 电视, 功放等
+- 打开任意一个emby的app(手机/电视/网页/其他设备),登录和你配置文件中相同的用户
+- 选择影片并享受海报墙的便捷+蓝光播放器的画质
+- [ ] 如果想只允许蓝光机播放，记得把海报墙选片的app设备名添加到阻止列表，否则你会双端同时播放。
+- [ ] 如果没有点播放按钮播片的强迫症，也不需要程序在播放出错时的提示信息->可以把阻止列表留空，然后使用点击emby的【喜欢】/【已观看】按钮来实现播放，在某些特定状况下可以加快载入时间以及配合atv上的infuse选片。
+- [ ] 独立使用的设备只需要登录不同的emby用户就可以了
+
+
+## 三、 开发者说明
+
+见 `DEVELOPMENT.md`
+
+
+## 四、感谢
+灵感来源于[xnoppo](https://github.com/siberian-git/Xnoppo)

@@ -73,7 +73,8 @@ Player:
   # 开机发送按键的延迟时间， 开机后发现smb,nfs需要一定时间，等待一会儿防止进目录后smb/nfs还没有出现。
   # 根据自己网络发现速度调整。
   StartupWait: 5
-
+  # 指定强制挂载目录(一般可以留空或填null, 如果是飞牛等设备，必须填写nfs根目录，例如 fs/1000/nfs)
+  ForceMountPath: null
   # 文件夹映射路径(不用的协议路径值可以留空)
   # 文件最后有路径配置说明, pioneer请参照 pioneer部分
   MappingPath:
@@ -114,7 +115,8 @@ AV:
   # 引用的AV执行器(默认null不启用)
   # 可供选择的执行器请看程序所在目录的av文件夹下，使用av.<filename>.<classname>来命名
   # 目前有以下几种:
-    # av.onkyo.Onkyo
+    # av.onkyo.Onkyo 所有可用命令可查看docs/onkyo-eiscp-command.yaml
+    # av.yamaha.Yamaha 目前可用命令如hdmi=hdmi1(或hdmi2、hdmi3、av1等等）
   Executor: null
   # AV功放ip, 改成你自己的
   IP: 192.168.1.13

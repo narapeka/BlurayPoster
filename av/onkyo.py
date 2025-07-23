@@ -1,15 +1,19 @@
 """
-For Onkyo AVReceiver
+Copyright (C) 2025 whitebrise
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+any later version.
 """
+
 import time
 
 import eiscp
 import logging
 from typing import Callable
 
-
 from abstract_classes import AV, AVException
-
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +39,9 @@ class Onkyo(AV):
             for step in steps:
                 command, operate = str.split(step, "=")
                 logger.debug("onkyo play begin command: {}, operate: {}".format(command, operate))
+                if command.lower() == 'sleep':
+                    time.sleep(int(operate))
+                    continue
                 receiver.command('{} {}'.format(command, operate))
                 time.sleep(0.5)
 
@@ -46,5 +53,8 @@ class Onkyo(AV):
             for step in steps:
                 command, operate = str.split(step, "=")
                 logger.debug("onkyo play end command: {}, operate: {}".format(command, operate))
+                if command.lower() == 'sleep':
+                    time.sleep(int(operate))
+                    continue
                 receiver.command('{} {}'.format(command, operate))
                 time.sleep(0.5)

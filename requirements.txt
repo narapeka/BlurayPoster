@@ -3,4 +3,4 @@ flask==3.0.2
 websocket-client==1.8.0
 pywebostv==0.8.9
 pyyaml==6.0.1
-onkyo-eiscp
+onkyo-eiscp==1.2.7
