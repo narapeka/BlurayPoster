@@ -35,14 +35,18 @@ class FileCatcher(Media):
 
                 # 判断是文件还是目录
                 import os
-                if os.path.splitext(file_path)[1]:  # 有扩展名，是文件
+                # 支持的视频文件扩展名
+                video_extensions = ['iso', 'mkv', 'm2ts', 'mp4']
+                file_extension = os.path.splitext(file_path)[1].lower().lstrip('.')
+                
+                if file_extension in video_extensions:  # 是支持的视频文件
                     media_path = file_path
-                    media_container = file_path.split('.')[-1]
-                    logger.info(f"Processing file: {file_path}, container: {media_container}")
-                else:  # 无扩展名，是目录（BDMV）
+                    media_container = file_extension
+                    logger.info(f"Processing video file: {file_path}, container: {media_container}")
+                else:  # 其他情况都视为目录（BDMV或其他）
                     media_path = file_path.rstrip('/')
                     media_container = "bluray"
-                    logger.info(f"Processing BDMV directory: {file_path}, container: {media_container}")
+                    logger.info(f"Processing directory: {file_path}, container: {media_container}")
 
                 # 调用播放器播放
                 play_result = self._player.play(
