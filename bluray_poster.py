@@ -81,6 +81,7 @@ def initialize_components(config):
         av = initialize_component("AV", config, AVException)
 
         media_instances = []
+        media_executor_names = []
         
         # Find all Media sections (Media, Media2, Media3, etc.)
         media_sections = []
@@ -99,6 +100,7 @@ def initialize_components(config):
                     media_class = dynamic_import(module_name, class_name)
                     media = media_class(player, tv, av, media_config)
                     media_instances.append(media)
+                    media_executor_names.append(media_config['Executor'])
                     logging.info(f"{section_name} Media executor initialized successfully: {media_config['Executor']}")
                 except Exception as e:
                     logging.error(f"Error initializing {section_name} Media executor ({media_config.get('Executor', 'Unknown')}): {e}")
@@ -109,11 +111,11 @@ def initialize_components(config):
             raise MediaException("Error initializing Media: No valid Media executors found.")
         
         logging.info(f"Successfully initialized {len(media_instances)} Media executor(s)")
-        return media_instances
+        return media_instances, media_executor_names
 
     except (PlayerException, TVException, AVException, MediaException) as e:
         logging.error(f"Initialization error: {e.message}")
-        return None
+        return None, None
 
 
 if __name__ == "__main__":
@@ -125,26 +127,26 @@ if __name__ == "__main__":
             my_logger = logging.getLogger(__name__)
             my_logger.info("Starting the main application")
             
-            media_instances = initialize_components(my_config)
+            media_instances, media_executor_names = initialize_components(my_config)
             if media_instances is None:
                 print("Failed to initialize Media components")
                 exit(1)
             
             # Initialize all media instances
-            for i, media in enumerate(media_instances):
+            for i, (media, executor_name) in enumerate(zip(media_instances, media_executor_names)):
                 try:
                     media.start_before()
-                    my_logger.info(f"Media executor {i+1} start_before() completed")
+                    my_logger.info(f"{executor_name} Media executor start_before() completed")
                 except Exception as e:
-                    my_logger.error(f"Error in Media executor {i+1} start_before(): {e}")
+                    my_logger.error(f"Error in {executor_name} Media executor start_before(): {e}")
             
             # Start all media instances
-            for i, media in enumerate(media_instances):
+            for i, (media, executor_name) in enumerate(zip(media_instances, media_executor_names)):
                 try:
                     media.start()
-                    my_logger.info(f"Media executor {i+1} start() completed")
+                    my_logger.info(f"{executor_name} Media executor start() completed")
                 except Exception as e:
-                    my_logger.error(f"Error in Media executor {i+1} start(): {e}")
+                    my_logger.error(f"Error in {executor_name} Media executor start(): {e}")
             
             # Main loop - keep all media instances running
             my_logger.info(f"Main application running with {len(media_instances)} Media executor(s)")

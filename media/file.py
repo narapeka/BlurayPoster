@@ -6,7 +6,7 @@ from abstract_classes import Media, MediaException
 
 logger = logging.getLogger(__name__)
 
-class FileCatcher(Media):
+class Path(Media):
     def __init__(self, player, tv, av, config: dict):
         super().__init__(player, tv, av, config)
         try:
@@ -20,7 +20,7 @@ class FileCatcher(Media):
             self.server_thread.start()
             
         except Exception as e:
-            raise MediaException(f"FileCatcher init error: {str(e)}")
+            raise MediaException(f"Path init error: {str(e)}")
 
     def _setup_routes(self):
         @self.app.route('/play', methods=['POST'])
@@ -114,4 +114,4 @@ class FileCatcher(Media):
         pass
 
     def on_message(self, header: str, message: str):
-        pass
+        pass 

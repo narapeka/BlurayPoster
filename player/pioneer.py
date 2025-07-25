@@ -185,7 +185,7 @@ class Pioneer(Player):
                 if "elapsetime" in play_info["result"]:
                     self._play_status = 1
                     logger.debug("set playing status to 1")
-                    self._on_play_begin()
+                    # self._on_play_begin()
                 elif time.time() - last_qry_time > timeout:
                     break
                 else:
@@ -292,6 +292,11 @@ class Pioneer(Player):
         logger.debug("transfer path, from: {}, to: {}".format(media_path, real_path))
         sever, folder, file = self.extract_path_parts(real_path)
         logger.debug("curt path, sever: {}, folder:  {}, file: {}".format(sever, folder, file))
+
+        # 提前切换HDMI
+        self._on_play_begin = on_play_begin
+        self._on_play_begin()
+
         if container != "bluray" and not file.lower().endswith(".iso"):
             if not self._play(self._use_nfs, folder+"/"+file, self.VIDEO):
                 return on_message("Error", "cannot play bdmv folder, {}".format(media_path))

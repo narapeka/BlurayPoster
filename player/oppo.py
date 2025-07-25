@@ -463,7 +463,7 @@ class Oppo(Player):
             if self._play_status == 0:
                 if global_info["is_video_playing"] is True:
                     self._play_status = 1
-                    self._on_play_begin()
+                    # self._on_play_begin()
             elif self._play_status == 1:
                 if global_info["is_video_playing"] is True:
                     if time.time() - last_report_time > 60:
@@ -566,6 +566,11 @@ class Oppo(Player):
             # 用过的key移到队尾
             self._auth.remove(used_key)
             self._auth.append(used_key)
+            
+        # 提前切换HDMI
+        self._on_play_begin = on_play_begin
+        self._on_play_begin()
+        
         if container != "bluray":
             if not self._play_normal_file(self._use_nfs, file):
                 return on_message("Error", "cannot play normal file, {}".format(media_path))
