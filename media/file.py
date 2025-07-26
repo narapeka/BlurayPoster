@@ -13,6 +13,8 @@ class Path(Media):
             # 读取配置
             self.http_port = 7507
             self.app = Flask(__name__)
+            # 添加简单的离线状态跟踪
+            self._player_offline = False
             self._setup_routes()
             
             # 在独立线程启动Flask服务器
@@ -26,6 +28,8 @@ class Path(Media):
         @self.app.route('/play', methods=['POST'])
         def handle_play():
             try:
+                # 重置离线状态
+                self._player_offline = False
 
                 # 获取请求的 JSON 数据
                 data = request.get_json()
@@ -58,6 +62,10 @@ class Path(Media):
                     on_play_end=self.on_play_end
                 )
 
+                # 检查是否播放器离线
+                if self._player_offline:
+                    return jsonify({"status": "error", "message": "Player is offline"}), 503
+                
                 # 返回成功响应
                 return jsonify({"status": "success", "message": "Play request sent successfully"}), 200
 
@@ -114,4 +122,6 @@ class Path(Media):
         pass
 
     def on_message(self, header: str, message: str):
-        pass 
+        # 只在播放器离线时设置标志
+        if header == "Error" and "离线" in message:
+            self._player_offline = True 
