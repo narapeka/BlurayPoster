@@ -14,6 +14,8 @@ import requests
 import json
 import threading
 import urllib.parse
+import subprocess
+import platform
 from abstract_classes import Player, PlayerException
 
 
@@ -460,9 +462,21 @@ class Oppo(Player):
         :return: 如果设备在线返回 True，否则返回 False
         """
         try:
-            # 尝试获取全局信息来检测设备是否在线
-            global_info = self._get_global_info()
-            return global_info is not None
+            # 使用ping命令检测设备是否在线
+            if platform.system().lower() == "windows":
+                # Windows系统使用ping -n 1
+                result = subprocess.run(['ping', '-n', '1', self._ip], 
+                                      capture_output=True, text=True, timeout=3)
+            else:
+                # Linux/Mac系统使用ping -c 1
+                result = subprocess.run(['ping', '-c', '1', self._ip], 
+                                      capture_output=True, text=True, timeout=3)
+            
+            # 检查ping命令的返回码，0表示成功
+            return result.returncode == 0
+        except subprocess.TimeoutExpired:
+            logger.debug(f"ping {self._ip} 超时")
+            return False
         except Exception as e:
             logger.debug(f"检测设备在线状态时出错: {e}")
             return False
