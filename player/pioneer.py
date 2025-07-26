@@ -36,8 +36,6 @@ class Pioneer(Player):
             self._startup_wait = self._config.get('StartupWait', 5)
             self._online_status = 1
             self._offline_count = 0
-            self._online_check_interval = 3  # 在线检测间隔，固定3秒
-            self._offline_threshold = 5  # 离线阈值，连续失败次数，固定5次
 
             self._on_message = None
             self._on_play_begin = None
@@ -100,6 +98,17 @@ class Pioneer(Player):
             logger.error(f"get play info failed, error: {e}")
         return None
 
+    def is_online(self):
+        """
+        检查设备是否在线
+        :return: bool, True表示在线，False表示离线
+        """
+        try:
+            return self._is_port_open()
+        except Exception as e:
+            logger.error(f"check device online status failed, error: {e}")
+            return False
+
     def _is_port_open(self) -> bool:
         """
         检测主机的指定端口是否开放。
@@ -142,37 +151,26 @@ class Pioneer(Player):
             time.sleep(1)
 
     def _track_online_status(self):
-        """
-        跟踪设备在线状态
-        :return:
-        """
-        logger.debug("开始跟踪Pioneer设备在线状态")
+        logger.debug("track online status")
         while True:
-            time.sleep(self._online_check_interval)
+            time.sleep(1)
             online = self._is_port_open()
             if online:
                 if self._online_status == 0:
                     self._offline_count = 0
                     self._online_status = 1
-                    logger.debug("Pioneer设备已上线")
+                    logger.debug("set online status to 1")
                     time.sleep(self._startup_wait)
                     self._send_control_sequence(self._startup_key_sequence)
             else:
                 if self._online_status == 1:
-                    # 离线检测，如果连续多次检测不到在线状态，则设置为离线
+                    # 关机检测， 如果连续5次检测不到在线状态，则设置为离线
                     self._offline_count += 1
-                    logger.debug(f"Pioneer设备离线计数: {self._offline_count}")
-                    if self._offline_count >= self._offline_threshold:
+                    logger.debug(f"offline count: {self._offline_count}")
+                    if self._offline_count > 5:
                         self._online_status = 0
                         self._offline_count = 0
-                        logger.debug("Pioneer设备已离线")
-
-    def is_online(self) -> bool:
-        """
-        获取当前在线状态
-        :return: 如果设备在线返回 True，否则返回 False
-        """
-        return self._online_status == 1
+                        logger.debug("set online status to 0")
 
     def _track_play_status(self):
         """
@@ -292,6 +290,7 @@ class Pioneer(Player):
         :param kwargs:
         :return:
         """
+
         # 检查设备是否在线，如果离线则不执行HDMI切换
         if not self.is_online():
             logger.warning("Pioneer设备离线，跳过HDMI切换")
@@ -314,7 +313,6 @@ class Pioneer(Player):
         logger.debug("transfer path, from: {}, to: {}".format(media_path, real_path))
         sever, folder, file = self.extract_path_parts(real_path)
         logger.debug("curt path, sever: {}, folder:  {}, file: {}".format(sever, folder, file))
-
         if container != "bluray" and not file.lower().endswith(".iso"):
             if not self._play(self._use_nfs, folder+"/"+file, self.VIDEO):
                 return on_message("Error", "cannot play bdmv folder, {}".format(media_path))
