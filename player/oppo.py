@@ -523,6 +523,10 @@ class Oppo(Player):
         :param kwargs:
         :return:
         """
+        # 提前切换HDMI
+        self._on_play_begin = on_play_begin
+        self._on_play_begin()
+        
         if self._play_status >= 0:
             return on_message("Notification", "movie is playing or prepare to playing, wait!")
         # 转换目录
@@ -567,9 +571,7 @@ class Oppo(Player):
             self._auth.remove(used_key)
             self._auth.append(used_key)
             
-        # 提前切换HDMI
-        self._on_play_begin = on_play_begin
-        self._on_play_begin()
+
         
         if container != "bluray":
             if not self._play_normal_file(self._use_nfs, file):

@@ -279,6 +279,11 @@ class Pioneer(Player):
         :param kwargs:
         :return:
         """
+
+        # 提前切换HDMI
+        self._on_play_begin = on_play_begin
+        self._on_play_begin()
+
         if self._play_status >= 0:
             return on_message("Notification", "movie is playing or prepare to playing, wait!")
         # 转换目录
@@ -292,10 +297,6 @@ class Pioneer(Player):
         logger.debug("transfer path, from: {}, to: {}".format(media_path, real_path))
         sever, folder, file = self.extract_path_parts(real_path)
         logger.debug("curt path, sever: {}, folder:  {}, file: {}".format(sever, folder, file))
-
-        # 提前切换HDMI
-        self._on_play_begin = on_play_begin
-        self._on_play_begin()
 
         if container != "bluray" and not file.lower().endswith(".iso"):
             if not self._play(self._use_nfs, folder+"/"+file, self.VIDEO):
