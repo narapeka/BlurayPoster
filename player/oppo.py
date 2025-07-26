@@ -42,6 +42,17 @@ class Oppo(Player):
             self._position_ticks = 0
             self._total_ticks = 0
             self._play_status = -1
+            
+            # 添加在线状态检测相关变量
+            self._online_status = 1  # 1: 在线, 0: 离线
+            self._offline_count = 0
+            self._online_check_interval = 3  # 在线检测间隔，固定3秒
+            self._offline_threshold = 5  # 离线阈值，连续失败次数，固定5次
+            
+            # 启动在线状态跟踪线程
+            thread = threading.Thread(target=self._track_online_status)
+            thread.daemon = True
+            thread.start()
         except Exception as e:
             raise PlayerException(e)
 
@@ -443,6 +454,50 @@ class Oppo(Player):
             logger.error(f"get samba share folder failed, error: {e}")
         return None
 
+    def _is_device_online(self) -> bool:
+        """
+        检测设备是否在线
+        :return: 如果设备在线返回 True，否则返回 False
+        """
+        try:
+            # 尝试获取全局信息来检测设备是否在线
+            global_info = self._get_global_info()
+            return global_info is not None
+        except Exception as e:
+            logger.debug(f"检测设备在线状态时出错: {e}")
+            return False
+
+    def _track_online_status(self):
+        """
+        跟踪设备在线状态
+        :return:
+        """
+        logger.debug("开始跟踪Oppo设备在线状态")
+        while True:
+            time.sleep(self._online_check_interval)
+            online = self._is_device_online()
+            if online:
+                if self._online_status == 0:
+                    self._offline_count = 0
+                    self._online_status = 1
+                    logger.debug("Oppo设备已上线")
+            else:
+                if self._online_status == 1:
+                    # 离线检测，如果连续多次检测不到在线状态，则设置为离线
+                    self._offline_count += 1
+                    logger.debug(f"Oppo设备离线计数: {self._offline_count}")
+                    if self._offline_count >= self._offline_threshold:
+                        self._online_status = 0
+                        self._offline_count = 0
+                        logger.debug("Oppo设备已离线")
+
+    def is_online(self) -> bool:
+        """
+        获取当前在线状态
+        :return: 如果设备在线返回 True，否则返回 False
+        """
+        return self._online_status == 1
+
     def _track_play_status(self):
         """
         跟踪播放进度
@@ -523,6 +578,11 @@ class Oppo(Player):
         :param kwargs:
         :return:
         """
+        # 检查设备是否在线，如果离线则不执行HDMI切换
+        if not self.is_online():
+            logger.warning("Oppo设备离线，跳过HDMI切换")
+            return on_message("Error", "Oppo设备离线，无法播放")
+        
         # 提前切换HDMI
         self._on_play_begin = on_play_begin
         self._on_play_begin()

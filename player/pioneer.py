@@ -36,6 +36,8 @@ class Pioneer(Player):
             self._startup_wait = self._config.get('StartupWait', 5)
             self._online_status = 1
             self._offline_count = 0
+            self._online_check_interval = 3  # 在线检测间隔，固定3秒
+            self._offline_threshold = 5  # 离线阈值，连续失败次数，固定5次
 
             self._on_message = None
             self._on_play_begin = None
@@ -140,26 +142,37 @@ class Pioneer(Player):
             time.sleep(1)
 
     def _track_online_status(self):
-        logger.debug("track online status")
+        """
+        跟踪设备在线状态
+        :return:
+        """
+        logger.debug("开始跟踪Pioneer设备在线状态")
         while True:
-            time.sleep(1)
+            time.sleep(self._online_check_interval)
             online = self._is_port_open()
             if online:
                 if self._online_status == 0:
                     self._offline_count = 0
                     self._online_status = 1
-                    logger.debug("set online status to 1")
+                    logger.debug("Pioneer设备已上线")
                     time.sleep(self._startup_wait)
                     self._send_control_sequence(self._startup_key_sequence)
             else:
                 if self._online_status == 1:
-                    # 关机检测， 如果连续5次检测不到在线状态，则设置为离线
+                    # 离线检测，如果连续多次检测不到在线状态，则设置为离线
                     self._offline_count += 1
-                    logger.debug(f"offline count: {self._offline_count}")
-                    if self._offline_count > 5:
+                    logger.debug(f"Pioneer设备离线计数: {self._offline_count}")
+                    if self._offline_count >= self._offline_threshold:
                         self._online_status = 0
                         self._offline_count = 0
-                        logger.debug("set online status to 0")
+                        logger.debug("Pioneer设备已离线")
+
+    def is_online(self) -> bool:
+        """
+        获取当前在线状态
+        :return: 如果设备在线返回 True，否则返回 False
+        """
+        return self._online_status == 1
 
     def _track_play_status(self):
         """
@@ -279,7 +292,11 @@ class Pioneer(Player):
         :param kwargs:
         :return:
         """
-
+        # 检查设备是否在线，如果离线则不执行HDMI切换
+        if not self.is_online():
+            logger.warning("Pioneer设备离线，跳过HDMI切换")
+            return on_message("Error", "Pioneer设备离线，无法播放")
+        
         # 提前切换HDMI
         self._on_play_begin = on_play_begin
         self._on_play_begin()
