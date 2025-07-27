@@ -1,4 +1,4 @@
-# BlurayPoster extended with FileCatcher
+# BlurayPoster修改版
 
 Fork自[whitebrise/BlurayPoster](https://github.com/whitebrise/BlurayPoster)，感谢原作者。
 
@@ -55,16 +55,11 @@ Media2:
 
 ## 如何使用
 
-### 安装
-
-#### 全新安装
+### 全新安装
 
 建议使用Docker方式，镜像：**narapeka/blurayposter**
 
-#### 升级安装
-
-- 如果已经部署了原版 BlurayPoster，仅需更改镜像名后升级容器，原有配置可继续工作。
-- 如果需要增加filePath执行器，仅需如上所述修改 `config.yaml` 文件，添加 `media2` 执行器为 `media.file.Path`
+> **注意：必须采用host模式安装。**
 
 #### Docker CLI 安装
 
@@ -111,9 +106,56 @@ services:
         stdin_open: true
 ```
 
-> **注意：必须采用host模式安装。**
+### 升级安装
 
-### 安装Watcher
+如果已经部署了原版`BlurayPoster`，两种方式迁移到修改版`narapeka/blurayposter`：
+1. 备份原版`BlurayPoster`的`config.yaml`文件。全新安装修改版`BlurayPoster`之后，复制备份的`config.yaml`到新安装的容器，并添加新的媒体库执行器`media.file.Path`
+2. 如果熟悉Docker容器如何修改镜像，比如使用`Portainer`，则可以修改原有BlurayPoster容器的镜像为`narapeka/blurayposter`，更新容器后再修改`config.yaml`文件添加新的媒体库执行器`media.file.Path`
+
+添加新媒体库执行器`media.file.Path`的写法，注意media2与media同级：
+
+```yaml
+# 媒体库配置
+Media:
+  # 引用的媒体库执行器, 不要改
+  Executor: media.emby.Emby
+  # 设备客户端, 不要改
+  Client: Emby Bluray Poster
+  # 媒体库服务端显示的设备名称， 不要改
+  Device: Bluray Poster
+  # 设备唯一id， 不要改
+  DeviceId: whitebrise
+  # 其他emby相关配置参数
+  ...
+
+# 附加媒体库配置
+Media2:
+  # 使用芝杜海报墙媒体库
+  # 请预先安装和配置ZidooWatcher
+  # https://github.com/narapeka/ZidooWatcher
+
+  # 或者使用多珀海报墙媒体库
+  # 请预先安装和配置ADBWatcher
+  # https://github.com/narapeka/ADBWatcher
+  Executor: media.file.Path
+
+# 播放器配置
+Player:
+  # 引用的播放机执行器(默认oppo)
+  # 可供选择的执行器请看程序所在目录的player文件夹下，使用player.<filename>.<classname>来命名
+  # 目前有以下几种:
+    # player.oppo.Oppo
+    # player.pioneer.Pioneer
+  Executor: player.oppo.Oppo
+```
+
+### 完整配置样例
+
+查看项目内`config/config.yaml`文件
+
+## 安装Watcher
+
+如果要支持emby以外的海报墙拉起蓝光机，需要另外再安装相应播放器对应的监测器，详见：
 
 - **芝杜播放器**：安装 [ZidooWatcher](https://github.com/narapeka/ZidooWatcher)
 - **多珀播放器**：安装 [ADBWatcher](https://github.com/narapeka/ADBWatcher)
