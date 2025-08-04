@@ -245,18 +245,21 @@ class Pioneer(Player):
             # 设置请求的 URL 和头部信息
             url = self._http_host
 
+            # 根据play_type选择不同的请求参数
+            params = {
+                "dev_idx": 3 if play_type == 8 else 0,
+                "dev_type": 3 if play_type == 8 else 0,
+                "f_class": 1 if play_type == 8 else play_type,
+                "f_idx": 0,
+                "file": "/mnt/cifs/"+path,
+                "list_type": 0,
+                "mode": 0,
+                "repeat": 1 if play_type == 8 else 80
+            }
+            
             request_body = {
                 "method": "Playback.PlayFile",
-                "params": {
-                    "dev_idx": 0,
-                    "dev_type": 0,
-                    "f_class": play_type,
-                    "f_idx": 0,
-                    "file": "/mnt/cifs/"+path,
-                    "list_type": 0,
-                    "mode": 0,
-                    "repeat": 80
-                }
+                "params": params
             }
 
             # 发起 POST 请求
