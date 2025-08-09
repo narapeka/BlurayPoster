@@ -88,13 +88,19 @@ Player:
   ForceMountPath: null
   # 文件夹映射路径(不用的协议路径值可以留空)
   # 文件最后有路径配置说明, pioneer请参照 pioneer部分
+  # smb_index 和 nfs_index 为pioneer播放mkv和mp4专用，如果是oppo或者不需要播放mkv和mp4，则无需配置
+  # index的数字代表pioneer进入网络页面后，从上到下的共享设备序号，从1开始
   MappingPath:
     - Media: /path1
       SMB: /smb_host1
+      SMB_INDEX: 2
       NFS: /192.168.1.10/path1
+      NFS_INDEX: 3
     - Media: /path2
       SMB: /smb_host2
+      SMB_INDEX: 1
       NFS: /192.168.1.10/path2
+      NFS_INDEX: 4
 
 
 # 电视配置

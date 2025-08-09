@@ -53,6 +53,29 @@ Media2:
 
 ### 3. 优化调用蓝光机的拉起时间
 
+检测到播放事件后，立即切换到蓝光机对应的HDMI口，而不是等待播放开始后才切换HDMI。
+可以显著降低使用网盘或使用HDFury后的拉起等待时间。
+
+### 4. Pioneer增加拉起mkv和mp4功能
+
+如需拉起mkv和mp4，则需要额外配置设备序号
+
+```yaml
+  # smb_index 和 nfs_index 为pioneer播放mkv和mp4专用，如果是oppo或者不需要播放mkv和mp4，则无需配置
+  # index的数字代表pioneer进入网络页面后，从上到下的共享设备序号，从1开始
+  MappingPath:
+    - Media: /path1
+      SMB: /smb_host1
+      SMB_INDEX: 2
+      NFS: /192.168.1.10/path1
+      NFS_INDEX: 3
+    - Media: /path2
+      SMB: /smb_host2
+      SMB_INDEX: 1
+      NFS: /192.168.1.10/path2
+      NFS_INDEX: 4
+```
+
 ## 如何使用
 
 ### 全新安装

@@ -232,7 +232,7 @@ class Pioneer(Player):
         self._total_ticks = 0
         self._play_status = -1
 
-    def _play(self, nfs_prefer, path, play_type):
+    def _play(self, nfs_prefer, path, play_type, matched_mapping=None):
         """
         播放文件
         :param nfs_prefer:
@@ -245,16 +245,29 @@ class Pioneer(Player):
             # 设置请求的 URL 和头部信息
             url = self._http_host
 
-            # 根据play_type选择不同的请求参数
+            # 根据网络协议和匹配的映射计算 dev_type 与 dev_idx
+            dev_type = 3 if nfs_prefer else 4
+            dev_idx = 0
+            if matched_mapping:
+                try:
+                    dev_idx = (
+                        matched_mapping.get("NFS_INDEX", 0)
+                        if nfs_prefer
+                        else matched_mapping.get("SMB_INDEX", 0)
+                    )
+                except Exception:
+                    dev_idx = 0
+
+            # 根据 play_type 选择不同的请求参数（保持原有逻辑）
             params = {
-                "dev_idx": 3 if play_type == 8 else 0,
-                "dev_type": 3 if play_type == 8 else 0,
-                "f_class": 1 if play_type == 8 else play_type,
+                "dev_idx": dev_idx,
+                "dev_type": dev_type,
+                "f_class": 1 if play_type == self.VIDEO else play_type,
                 "f_idx": 0,
-                "file": "/mnt/cifs/"+path,
+                "file": "/mnt/cifs/" + path,
                 "list_type": 0,
                 "mode": 0,
-                "repeat": 1 if play_type == 8 else 80
+                "repeat": 1 if play_type == self.VIDEO else 80
             }
             
             request_body = {
@@ -309,18 +322,26 @@ class Pioneer(Player):
         media_path = (media_path.replace('\\\\', '\\').
                       replace("\\", "/").replace("//", "/"))
         real_path = media_path
+        matched_mapping = None
         for mapping_path in self._mapping_path_list:
-            real_path = real_path.replace(mapping_path["Media"], mapping_path["NFS"], 1) if self._use_nfs \
-                else real_path.replace(mapping_path["Media"], mapping_path["SMB"], 1)
+            media_prefix = mapping_path.get("Media")
+            if not media_prefix:
+                continue
+            if real_path.startswith(media_prefix + "/") or real_path == media_prefix or real_path.startswith(media_prefix):
+                replace_prefix = mapping_path.get("NFS") if self._use_nfs else mapping_path.get("SMB")
+                if replace_prefix:
+                    real_path = real_path.replace(media_prefix, replace_prefix, 1)
+                matched_mapping = mapping_path
+                break
         real_path = real_path.replace("//", "/")
         logger.debug("transfer path, from: {}, to: {}".format(media_path, real_path))
         sever, folder, file = self.extract_path_parts(real_path)
         logger.debug("curt path, sever: {}, folder:  {}, file: {}".format(sever, folder, file))
         if container != "bluray" and not file.lower().endswith(".iso"):
-            if not self._play(self._use_nfs, folder+"/"+file, self.VIDEO):
+            if not self._play(self._use_nfs, folder+"/"+file, self.VIDEO, matched_mapping):
                 return on_message("Error", "cannot play bdmv folder, {}".format(media_path))
         else:
-            if not self._play(self._use_nfs, folder+"/"+file, self.BDMV):
+            if not self._play(self._use_nfs, folder+"/"+file, self.BDMV, matched_mapping):
                 return on_message("Error", "cannot play bdmv folder, {}".format(media_path))
         # 开始播放并监控播放进度
         self._on_message = on_message
