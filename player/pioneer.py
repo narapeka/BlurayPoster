@@ -246,25 +246,37 @@ class Pioneer(Player):
             url = self._http_host
 
             # 根据网络协议和匹配的映射计算 dev_type 与 dev_idx
-            dev_type = 3 if nfs_prefer else 4
-            dev_idx = 0
-            if matched_mapping:
-                try:
-                    dev_idx = (
-                        matched_mapping.get("NFS_INDEX", 0)
-                        if nfs_prefer
-                        else matched_mapping.get("SMB_INDEX", 0)
-                    )
-                except Exception:
-                    dev_idx = 0
+            # For ISO/BDMV files, always use dev_idx=0 and dev_type=0
+            # For VIDEO files (MKV/MP4), use INDEX values from config
+            if play_type == self.BDMV:
+                # ISO or BDMV: always use dev_idx=0, dev_type=0
+                dev_type = 0
+                dev_idx = 0
+            else:
+                # VIDEO files (MKV/MP4): use INDEX values
+                dev_type = 3 if nfs_prefer else 4
+                dev_idx = 0
+                if matched_mapping:
+                    try:
+                        dev_idx = (
+                            matched_mapping.get("NFS_INDEX", 0)
+                            if nfs_prefer
+                            else matched_mapping.get("SMB_INDEX", 0)
+                        )
+                    except Exception:
+                        dev_idx = 0
 
             # 根据 play_type 选择不同的请求参数（保持原有逻辑）
+            # Normalize path - remove leading slash from path to avoid double slashes
+            normalized_path = path.lstrip('/')
+            file_path = "/mnt/cifs/" + normalized_path
+            
             params = {
                 "dev_idx": dev_idx,
                 "dev_type": dev_type,
                 "f_class": 1 if play_type == self.VIDEO else play_type,
                 "f_idx": 0,
-                "file": "/mnt/cifs/" + path,
+                "file": file_path,
                 "list_type": 0,
                 "mode": 0,
                 "repeat": 1 if play_type == self.VIDEO else 80
@@ -276,13 +288,17 @@ class Pioneer(Player):
             }
 
             # 发起 POST 请求
+            logger.debug(f"Playback.PlayFile request: {json.dumps(request_body, indent=2)}")
             res = requests.post(url, headers=self._headers, data=json.dumps(request_body))
 
             if res.status_code == 200:
                 result = res.json()
+                logger.debug(f"Playback.PlayFile response: {json.dumps(result, indent=2)}")
                 if "result" in result and result["result"] == "0":
                     return True
                 logger.error("play file failed, reason: {}, path: {}".format(res.text, request_body))
+            else:
+                logger.error(f"play file failed, HTTP status: {res.status_code}, response: {res.text}")
         except Exception as e:
             logger.error(f"play file exception, error: {e}")
             return False
