@@ -270,6 +270,10 @@ class Pioneer(Player):
             # Normalize path - remove leading slash from path to avoid double slashes
             normalized_path = path.lstrip('/')
             file_path = "/mnt/cifs/" + normalized_path
+            # For BDMV folders (not ISO files), add trailing slash
+            # rstrip('/') ensures we don't create double slashes if one already exists
+            if play_type == self.BDMV and not normalized_path.lower().endswith('.iso'):
+                file_path = file_path.rstrip('/') + '/'
             
             params = {
                 "dev_idx": dev_idx,
@@ -288,8 +292,10 @@ class Pioneer(Player):
             }
 
             # 发起 POST 请求
-            logger.debug(f"Playback.PlayFile request: {json.dumps(request_body, indent=2)}")
-            res = requests.post(url, headers=self._headers, data=json.dumps(request_body))
+            logger.debug(f"Playback.PlayFile request: {json.dumps(request_body, ensure_ascii=False, indent=2)}")
+            # Use ensure_ascii=False to send actual UTF-8 characters instead of Unicode escapes
+            # This matches how the official Pioneer remote app sends requests
+            res = requests.post(url, headers=self._headers, data=json.dumps(request_body, ensure_ascii=False))
 
             if res.status_code == 200:
                 result = res.json()
