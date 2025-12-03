@@ -89,7 +89,7 @@ class Pioneer(Player):
         """
         try:
             request_body = {"method": "Playback.GetPlayingStatus", "id": "1", "jsonrpc": "2.0"}
-            res = requests.post(self._http_host, headers=self._headers, data=json.dumps(request_body))
+            res = requests.post(self._http_host, headers=self._headers, json=request_body)
             if res.status_code == 200:
                 result = res.json()
                 if "result" in result:
@@ -136,7 +136,7 @@ class Pioneer(Player):
         logger.debug(f"send control key: {key}")
         try:
             request_body = {"method": "Remoter.SendKey", "params": {"key": self._control_keys[key]}, "id": "1", "jsonrpc": "2.0"}
-            res = requests.post(self._http_host, headers=self._headers, data=json.dumps(request_body), timeout=1)
+            res = requests.post(self._http_host, headers=self._headers, json=request_body, timeout=1)
             if res.status_code == 200:
                 return True
         except Exception as e:
@@ -181,7 +181,7 @@ class Pioneer(Player):
         self._play_status = 0
         last_qry_time = time.time()
         last_report_time = 0
-        timeout = 15
+        timeout = 20
 
         while True:
             time.sleep(1)
@@ -196,7 +196,7 @@ class Pioneer(Player):
                 if "elapsetime" in play_info["result"]:
                     self._play_status = 1
                     logger.debug("set playing status to 1")
-                    # self._on_play_begin()
+                    self._on_play_begin()
                 elif time.time() - last_qry_time > timeout:
                     break
                 else:
@@ -270,10 +270,6 @@ class Pioneer(Player):
             # Normalize path - remove leading slash from path to avoid double slashes
             normalized_path = path.lstrip('/')
             file_path = "/mnt/cifs/" + normalized_path
-            # For BDMV folders (not ISO files), add trailing slash
-            # rstrip('/') ensures we don't create double slashes if one already exists
-            if play_type == self.BDMV and not normalized_path.lower().endswith('.iso'):
-                file_path = file_path.rstrip('/') + '/'
             
             params = {
                 "dev_idx": dev_idx,
@@ -292,19 +288,13 @@ class Pioneer(Player):
             }
 
             # 发起 POST 请求
-            logger.debug(f"Playback.PlayFile request: {json.dumps(request_body, ensure_ascii=False, indent=2)}")
-            # Use ensure_ascii=False to send actual UTF-8 characters instead of Unicode escapes
-            # This matches how the official Pioneer remote app sends requests
-            res = requests.post(url, headers=self._headers, data=json.dumps(request_body, ensure_ascii=False))
+            res = requests.post(url, headers=self._headers, json=request_body)
 
             if res.status_code == 200:
                 result = res.json()
-                logger.debug(f"Playback.PlayFile response: {json.dumps(result, indent=2)}")
                 if "result" in result and result["result"] == "0":
                     return True
                 logger.error("play file failed, reason: {}, path: {}".format(res.text, request_body))
-            else:
-                logger.error(f"play file failed, HTTP status: {res.status_code}, response: {res.text}")
         except Exception as e:
             logger.error(f"play file exception, error: {e}")
             return False
@@ -335,8 +325,8 @@ class Pioneer(Player):
             return on_message("Error", "Pioneer设备离线，无法播放")
         
         # 提前切换HDMI
-        self._on_play_begin = on_play_begin
-        self._on_play_begin()
+        # self._on_play_begin = on_play_begin
+        # self._on_play_begin()
 
         if self._play_status >= 0:
             return on_message("Notification", "movie is playing or prepare to playing, wait!")
