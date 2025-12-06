@@ -28,6 +28,7 @@ class Oppo(Player):
             self._udp_timeout = self._config.get('UdpTimeout', 10)
             self._auth = self._config.get('Auth', [])
             self._use_nfs = self._config.get('NFSPrefer', True)
+            self._switch_hdmi_before_play = self._config.get('SwitchHdmiBeforePlay', True)
             self._udp_server_address = (self._ip, 7624)
             self._http_host = f"http://{self._ip}:436"
             self._mapping_path_list = self._config.get('MappingPath')
@@ -477,7 +478,9 @@ class Oppo(Player):
             if self._play_status == 0:
                 if global_info["is_video_playing"] is True:
                     self._play_status = 1
-                    # self._on_play_begin()
+                    # 如果未在开始时切换HDMI，则在此处切换
+                    if not self._switch_hdmi_before_play:
+                        self._on_play_begin()
             elif self._play_status == 1:
                 if global_info["is_video_playing"] is True:
                     if time.time() - last_report_time > 60:
@@ -543,9 +546,10 @@ class Oppo(Player):
             logger.warning("Oppo设备离线，跳过HDMI切换")
             return on_message("Error", "Oppo设备离线，无法播放")
         
-        # 提前切换HDMI
-        self._on_play_begin = on_play_begin
-        self._on_play_begin()
+        # 提前切换HDMI（如果配置允许）
+        if self._switch_hdmi_before_play:
+            self._on_play_begin = on_play_begin
+            self._on_play_begin()
 
         if self._play_status >= 0:
             return on_message("Notification", "movie is playing or prepare to playing, wait!")

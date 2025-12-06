@@ -26,6 +26,7 @@ class Pioneer(Player):
             self._ip = self._config.get('IP', 10)
             self._port = 8090
             self._use_nfs = self._config.get('NFSPrefer', True)
+            self._switch_hdmi_before_play = self._config.get('SwitchHdmiBeforePlay', True)
             self._http_host = f"http://{self._ip}:{self._port}/jsonrpc"
             self._mapping_path_list = self._config.get('MappingPath')
             self._play_start_timeout = self._config.get('PlayStartTimeout', 5)
@@ -196,7 +197,9 @@ class Pioneer(Player):
                 if "elapsetime" in play_info["result"]:
                     self._play_status = 1
                     logger.debug("set playing status to 1")
-                    self._on_play_begin()
+                    # 如果未在开始时切换HDMI，则在此处切换
+                    if not self._switch_hdmi_before_play:
+                        self._on_play_begin()
                 elif time.time() - last_qry_time > timeout:
                     break
                 else:
@@ -324,9 +327,10 @@ class Pioneer(Player):
             logger.warning("Pioneer设备离线，跳过HDMI切换")
             return on_message("Error", "Pioneer设备离线，无法播放")
         
-        # 提前切换HDMI
-        # self._on_play_begin = on_play_begin
-        # self._on_play_begin()
+        # 提前切换HDMI（如果配置允许）
+        if self._switch_hdmi_before_play:
+            self._on_play_begin = on_play_begin
+            self._on_play_begin()
 
         if self._play_status >= 0:
             return on_message("Notification", "movie is playing or prepare to playing, wait!")

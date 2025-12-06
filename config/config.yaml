@@ -70,6 +70,8 @@ Player:
   UdpTimeout: 10
   # 是否优先启用nfs, true为使用nfs, false为使用smb
   NFSPrefer: true
+  # 是否在播放开始时立即切换HDMI, true为立即切换, false为等待播放开始后再切换
+  SwitchHdmiBeforePlay: true
 
   # 检测到开机后发送的控制按键，只支持pionner,  支持的按键有：ok, left, right, up, down, return, home
   # 默认的按键是在要进入的共享盘和子目录都在第一个的情况，其他情况请自行修改,按键之间会自动插入1秒的延迟。
