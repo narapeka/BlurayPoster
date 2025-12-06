@@ -9,150 +9,65 @@ any later version
 
 import logging
 import os
-import importlib
+import threading
 import time
-from logging.handlers import TimedRotatingFileHandler
+
+from app.app_manager import AppManager
+from app.control_api import create_app, run_control_app
+from app.logging_utils import LogBuffer, setup_logging
 from configuration import Configuration
-from abstract_classes import *
 
 
-def setup_logging(log_level_str):
+def bootstrap_logging(config_path: str) -> LogBuffer:
     """
-    建立日志，滚动日志，每天一个日志文件，保留最近7天
-    :return:
+    Initialize logging with configured level and in-memory buffer.
     """
-    log_directory = 'logs'
-    if not os.path.exists(log_directory):
-        os.makedirs(log_directory)
-    logger = logging.getLogger()
-    log_level = getattr(logging, log_level_str.upper(), logging.DEBUG)
-    logger.setLevel(log_level)
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(log_level)
-    logger.addHandler(console_handler)
+    temp_config = Configuration(path=config_path)
+    temp_config.initialize()
+    log_level = temp_config.get("LogLevel") or "info"
+    log_buffer = LogBuffer(max_entries=200)
+    setup_logging(log_level, log_buffer)
+    return log_buffer
 
 
-def dynamic_import(module_name, class_name):
-    """
-    动态导入
-    :param module_name:
-    :param class_name:
-    :return:
-    """
+def main():
+    config_dir = os.getenv("CONFIG_DIR", "config") + "/config.yaml"
+    control_port = int(os.getenv("CONTROL_PORT", "7508"))
+    control_host = os.getenv("CONTROL_HOST", "0.0.0.0")
+
+    log_buffer = bootstrap_logging(config_dir)
+    logger = logging.getLogger(__name__)
+    logger.info("Starting BlurayPoster with config: %s", config_dir)
+    # Silence noisy Werkzeug/Flask request logs so only core app logs remain.
+    werk_logger = logging.getLogger("werkzeug")
+    werk_logger.setLevel(logging.CRITICAL)
+    werk_logger.propagate = False
+    werk_logger.disabled = True
+    logging.getLogger("werkzeug.serving").disabled = True
+    # Flask app logger (used by Flask itself) can also be muted.
+    logging.getLogger("flask.app").disabled = True
+
+    manager = AppManager(config_path=config_dir)
+    api_static = os.path.join(os.path.dirname(__file__), "webui", "dist")
+    static_folder = api_static if os.path.exists(api_static) else None
+    control_app = create_app(manager, log_buffer, static_folder=static_folder)
+
+    api_thread = threading.Thread(
+        target=run_control_app, args=(control_app, control_host, control_port), daemon=True
+    )
+    api_thread.start()
+
+    if not manager.start():
+        logger.error("Failed to start manager; exiting")
+        return
+
     try:
-        module = importlib.import_module(module_name)
-    except ModuleNotFoundError as e:
-        raise ImportError(f"Error importing module {module_name}: {e}")
-    try:
-        cls = getattr(module, class_name)
-    except AttributeError as e:
-        raise ImportError(f"Error importing class {class_name} from module {module_name}: {e}")
-    return cls
-
-
-def initialize_component(component_key, config, exception_class):
-    """
-    初始化指定组件
-    :param component_key:
-    :param config:
-    :param exception_class:
-    :return:
-    """
-    component_config = config.get(component_key)
-    if component_config and "Executor" in component_config:
-        try:
-            module_name, class_name = component_config["Executor"].rsplit('.', 1)
-            cls = dynamic_import(module_name, class_name)
-            return cls(component_config)
-        except Exception as e:
-            logging.error(f"Error importing {component_key}: {e}")
-    return None
-
-
-def initialize_components(config):
-    """
-    初始化所有组件
-    :param config:
-    :return:
-    """
-    try:
-        player = initialize_component("Player", config, PlayerException)
-        tv = initialize_component("TV", config, TVException)
-        av = initialize_component("AV", config, AVException)
-
-        media_instances = []
-        media_executor_names = []
-        
-        # Find all Media sections (Media, Media2, Media3, etc.)
-        media_sections = []
-        for key in config._config.keys():
-            if key.startswith("Media"):
-                media_sections.append(key)
-        
-        # Sort to ensure Media comes first, then Media2, Media3, etc.
-        media_sections.sort()
-        
-        for section_name in media_sections:
-            media_config = config.get(section_name)
-            if media_config and "Executor" in media_config:
-                try:
-                    module_name, class_name = media_config["Executor"].rsplit('.', 1)
-                    media_class = dynamic_import(module_name, class_name)
-                    media = media_class(player, tv, av, media_config)
-                    media_instances.append(media)
-                    media_executor_names.append(media_config['Executor'])
-                    logging.info(f"{section_name} Media executor initialized successfully: {media_config['Executor']}")
-                except Exception as e:
-                    logging.error(f"Error initializing {section_name} Media executor ({media_config.get('Executor', 'Unknown')}): {e}")
-            else:
-                logging.warning(f"{section_name} Media executor is missing Executor field, skipping")
-        
-        if not media_instances:
-            raise MediaException("Error initializing Media: No valid Media executors found.")
-        
-        logging.info(f"Successfully initialized {len(media_instances)} Media executor(s)")
-        return media_instances, media_executor_names
-
-    except (PlayerException, TVException, AVException, MediaException) as e:
-        logging.error(f"Initialization error: {e.message}")
-        return None, None
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        logger.info("Shutdown requested by user")
+        manager.stop()
 
 
 if __name__ == "__main__":
-    try:
-        config_dir = os.getenv('CONFIG_DIR', 'config') + "/config.yaml"
-        my_config = Configuration(path=config_dir)
-        if my_config.initialize():
-            setup_logging(my_config.get("LogLevel"))
-            my_logger = logging.getLogger(__name__)
-            my_logger.info("Starting the main application")
-            
-            media_instances, media_executor_names = initialize_components(my_config)
-            if media_instances is None:
-                print("Failed to initialize Media components")
-                exit(1)
-            
-            # Initialize all media instances
-            for i, (media, executor_name) in enumerate(zip(media_instances, media_executor_names)):
-                try:
-                    media.start_before()
-                    my_logger.info(f"{executor_name} Media executor start_before() completed")
-                except Exception as e:
-                    my_logger.error(f"Error in {executor_name} Media executor start_before(): {e}")
-            
-            # Start all media instances
-            for i, (media, executor_name) in enumerate(zip(media_instances, media_executor_names)):
-                try:
-                    media.start()
-                    my_logger.info(f"{executor_name} Media executor start() completed")
-                except Exception as e:
-                    my_logger.error(f"Error in {executor_name} Media executor start(): {e}")
-            
-            # Main loop - keep all media instances running
-            my_logger.info(f"Main application running with {len(media_instances)} Media executor(s)")
-            while True:
-                time.sleep(100)
-        else:
-            print("Failed to initialize configuration")
-    except Exception as ee:
-        print("Failed to start program, ex: {}".format(ee))
+    main()

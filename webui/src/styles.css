@@ -1,0 +1,349 @@
+:root {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.6;
+  color: #0f172a;
+  background: radial-gradient(circle at 20% 20%, #e0f2fe 0, transparent 25%),
+    radial-gradient(circle at 80% 0%, #f3e8ff 0, transparent 30%),
+    #f8fafc;
+}
+
+body {
+  margin: 0;
+}
+
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px calc(32px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 768px) {
+  .app {
+    padding: 32px 24px 48px;
+  }
+}
+
+h1 {
+  font-size: 32px;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.topbar-pill {
+  margin-left: auto;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin: 12px 0 18px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.tab {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #0f172a;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  min-width: 96px;
+  transition: all 120ms ease;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.tab.active {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.25);
+}
+
+.controls-row {
+  margin-top: 4px;
+}
+
+.controls-row button {
+  flex: 1;
+  min-width: 0;
+  min-height: 54px;
+  font-size: 16px;
+}
+
+.btn-start {
+  background: linear-gradient(135deg, #16a34a, #0f9f6e);
+  box-shadow: 0 10px 24px rgba(16, 185, 129, 0.25);
+  color: #f8fafc;
+}
+
+.btn-stop {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  box-shadow: 0 10px 24px rgba(220, 38, 38, 0.25);
+  color: #f8fafc;
+}
+
+.btn-reload {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.25);
+  color: #f8fafc;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
+}
+
+.config-card {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin-bottom: 12px;
+}
+
+.card h2 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 18px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+button {
+  border: none;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  min-width: 110px;
+  transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.2);
+}
+
+button.secondary {
+  background: #e2e8f0;
+  color: #0f172a;
+  box-shadow: none;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+button:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+textarea {
+  width: 100%;
+  min-height: 0;
+  height: clamp(240px, 60vh, 880px);
+  max-height: calc(100dvh - 200px);
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 13.5px;
+  resize: vertical;
+  background: #f8fafc;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+  box-sizing: border-box;
+  line-height: 1.45;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  text-transform: capitalize;
+  font-size: 13px;
+}
+
+.status-running {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-stopped {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-error {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.log-viewer {
+  background: #0b1120;
+  color: #e5e7eb;
+  border-radius: 12px;
+  padding: 14px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  min-height: 0;
+  height: clamp(220px, 45vh, 560px);
+  max-height: calc(100dvh - 200px);
+  overflow: auto;
+  border: 1px solid #1e293b;
+  word-break: break-word;
+}
+
+.log-line {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.log-entry {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 8px;
+  align-items: baseline;
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  word-break: break-word;
+}
+
+.log-entry:last-child {
+  border-bottom: none;
+}
+
+.log-level {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.log-time {
+  color: #cbd5e1;
+  font-size: 12px;
+  min-width: 76px;
+}
+
+.log-text {
+  color: #e5e7eb;
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.pill-info {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.pill-warning {
+  background: rgba(251, 191, 36, 0.15);
+  color: #facc15;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+.pill-error {
+  background: rgba(248, 113, 113, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(248, 113, 113, 0.4);
+}
+
+.pill-debug {
+  background: rgba(156, 163, 175, 0.12);
+  color: #e5e7eb;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+.muted {
+  color: #64748b;
+}
+
+@media (max-width: 640px) {
+  h1 {
+    font-size: 26px;
+  }
+  .topbar {
+    flex-direction: row;
+    align-items: center;
+  }
+  .topbar h1 {
+    flex: 1;
+  }
+  .topbar-pill {
+    margin-left: 0;
+  }
+  .row {
+    flex-direction: column;
+  }
+  button {
+    width: 100%;
+    justify-content: center;
+  }
+  .tab {
+    width: 100%;
+    text-align: center;
+  }
+  .tabs {
+    gap: 8px;
+  }
+  .card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+  .config-card {
+    padding: 0;
+    margin-bottom: 10px;
+  }
+  .controls-row {
+    gap: 8px;
+  }
+  textarea {
+    height: clamp(200px, 55vh, 720px);
+    max-height: calc(100dvh - 160px);
+    font-size: 13px;
+  }
+  .log-viewer {
+    height: clamp(180px, 38vh, 460px);
+    max-height: calc(100dvh - 160px);
+  }
+  .log-entry {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .log-time {
+    min-width: auto;
+  }
+}
+

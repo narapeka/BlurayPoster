@@ -11,19 +11,23 @@ COPY . .
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    build-essential gcc python3-dev && \
+    build-essential gcc python3-dev curl gnupg && \
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y --no-install-recommends nodejs && \
     if [ "${TARGETARCH}" = "arm64" ]; then \
         apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross; \
     fi && \
     pip install --user -r requirements.txt && \
-    apt-get purge -y --auto-remove build-essential gcc python3-dev && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    cd /app/webui && npm install && npm run build && \
+    apt-get purge -y --auto-remove build-essential gcc python3-dev curl gnupg && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* /root/.npm
 
 # 最终阶段
 FROM python:${PYTHON_VERSION}-slim
 ENV LANG="C.UTF-8" \
     TZ="Asia/Shanghai" \
     CONFIG_DIR="/config" \
+    CONTROL_PORT="7508" \
     PATH="/root/.local/bin:${PATH}"
 
 WORKDIR /app

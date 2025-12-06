@@ -31,6 +31,12 @@ class Configuration(object):
             logger.error(f"read config file error: {e}")
         return False
 
+    def reload(self):
+        """
+        重新加载配置
+        """
+        return self.initialize()
+
     def get(self, key):
         """
         获取指定值
@@ -40,3 +46,6 @@ class Configuration(object):
         if self._config is not None and key in self._config:
             return self._config[key]
         return None
+
+    def to_dict(self):
+        return self._config or {}

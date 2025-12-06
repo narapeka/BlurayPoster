@@ -6,17 +6,49 @@ __pycache__/
 *.pyo
 *.pyd
 
+# 忽略 Python 构建/打包产物
+*.egg-info/
+.eggs/
+build/
+dist/
+pip-wheel-metadata/
+
 # 忽略虚拟环境目录
 venv/
 env/
 .venv/
 
+# 测试/类型检查缓存
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
 # 忽略 IDE 和编辑器产生的配置文件
 .vscode/
 .idea/
 
-# 忽略其他常见的临时文件
+# 忽略日志和其他临时文件
+logs/
 *.log
 *.bak
 *.swp
 .DS_Store
+npm-debug.log*
+yarn-error.log*
+
+# 环境变量文件
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# 前端依赖与构建产物
+**/node_modules/
+webui/dist/
+webui/.vite/
+
+# 用户自定义本地配置
+config/*.local.yaml
