@@ -2,13 +2,6 @@
 
 Fork自[whitebrise/BlurayPoster](https://github.com/whitebrise/BlurayPoster)，感谢原作者。
 
-## 目录
-
-- [Fork添加的功能](#fork添加的功能)
-- [如何使用](#如何使用)
-  - [安装](#安装)
-  - [安装Watcher](#安装watcher)
-
 ## Fork添加的功能
 
 ### 1. 新媒体库执行器 
@@ -75,6 +68,11 @@ Media2:
       NFS: /192.168.1.10/path2
       NFS_INDEX: 4
 ```
+
+### 5. Web控制台
+
+- 内置 React 前端，可在浏览器查看运行状态、启动/停止/重载、在线编辑配置、实时查看日志（最多保留 200 条）。
+- 访问地址 `http://<blurayposter_ip>:7508/`
 
 ## 如何使用
 
