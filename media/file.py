@@ -1,6 +1,7 @@
 import logging
 import threading
 import requests
+from urllib.parse import unquote
 from flask import Flask, request, jsonify
 from abstract_classes import Media, MediaException
 
@@ -25,15 +26,24 @@ class Path(Media):
             raise MediaException(f"Path init error: {str(e)}")
 
     def _setup_routes(self):
-        @self.app.route('/play', methods=['POST'])
+        @self.app.route('/play', methods=['GET', 'POST'])
         def handle_play():
             try:
                 # 重置离线状态
                 self._player_offline = False
 
-                # 获取请求的 JSON 数据
-                data = request.get_json()
-                file_path = data.get("file_path")
+                # 支持GET和POST两种方式
+                # GET: 从查询参数获取 file_path (需要URL解码)
+                # POST: 从JSON body获取 file_path
+                if request.method == 'GET':
+                    file_path = request.args.get("file_path")
+                    if file_path:
+                        # URL解码，处理特殊字符
+                        file_path = unquote(file_path)
+                else:  # POST
+                    data = request.get_json()
+                    file_path = data.get("file_path") if data else None
+                
                 if not file_path:
                     return jsonify({"status": "error", "message": "Missing file_path"}), 400
 
