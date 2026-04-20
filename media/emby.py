@@ -43,6 +43,8 @@ class Emby(Media):
             self._ws = None
             self._ws_thread = None
             self._play_item = None
+            self._play_path = None
+            self._play_container = None
             self._played_info = {}
         except Exception as e:
             raise MediaException(e)
@@ -123,6 +125,57 @@ class Emby(Media):
                 return res.json()
         except Exception as e:
             logger.error(f"Exception during device registration: {e}")
+
+    @staticmethod
+    def _extract_ext(path: str) -> str:
+        """
+        从路径或URL中提取小写扩展名，不含前导点。
+        URL会先去掉query/fragment，路径分隔符兼容 / 和 \\。
+        无法提取时返回空字符串。
+        """
+        if not path:
+            return ""
+        tail = path.split("?", 1)[0].split("#", 1)[0]
+        for sep in ("/", "\\"):
+            if sep in tail:
+                tail = tail.rsplit(sep, 1)[-1]
+        if "." not in tail:
+            return ""
+        return tail.rsplit(".", 1)[-1].lower()
+
+    def _resolve_play_target(self, item: dict):
+        """
+        将Emby item解析为真正要交给播放器的 (path, container)。
+        - 普通文件: 使用 item.Path 以及 Container 回退链
+          (item.Container -> MediaSources[0].Container -> path 扩展名)。
+        - strm 文件: 以 MediaSources[0].Path 作为真实播放路径,
+          container 由该路径的扩展名推导 (可能为空, 例如重定向URL)。
+        """
+        path = item.get("Path") or ""
+        container = (item.get("Container") or "").strip()
+        media_sources = item.get("MediaSources") or []
+        if not container and media_sources:
+            container = (media_sources[0].get("Container") or "").strip()
+        if not container:
+            container = self._extract_ext(path)
+
+        if container.lower() != "strm":
+            return path, container
+
+        if not media_sources:
+            logger.warning(f"strm item has no MediaSources, path: {path}")
+            return path, container
+        source_path = media_sources[0].get("Path") or ""
+        if not source_path:
+            logger.warning(f"strm MediaSources[0].Path is empty, path: {path}")
+            return path, container
+        source_container = self._extract_ext(source_path)
+        logger.info(
+            "strm resolved: {} -> {}, container: {} -> {}".format(
+                path, source_path, container, source_container or "(empty)"
+            )
+        )
+        return source_path, source_container
 
     def _on_ws_message(self, ws, message):
         try:
@@ -241,17 +294,23 @@ class Emby(Media):
             item_infos = self._query_item(user_data["ItemId"])
             if item_infos is not None and "Items" in item_infos and len(item_infos["Items"]) > 0:
                 for item in item_infos["Items"]:
-                    path = item["Path"]
-                    if item["IsFolder"] is True:
+                    if item.get("IsFolder") is True:
                         continue
-                    if path.split('.')[-1] in self._exclude_video_ext:
-                        logger.info(f"exclude video, path: {path}")
+                    play_path, play_container = self._resolve_play_target(item)
+                    if play_container and play_container.lower() in self._exclude_video_ext:
+                        logger.info(
+                            f"exclude video, path: {play_path}, container: {play_container}"
+                        )
                         continue
                     self._play_item = item
-                    logger.info(f"prepare to play this video, path: {path}")
+                    self._play_path = play_path
+                    self._play_container = play_container
+                    logger.info(f"prepare to play this video, path: {play_path}")
                     self._run_player()
                     return
                 self._play_item = None
+                self._play_path = None
+                self._play_container = None
 
     def _get_all_sessions(self):
         """
@@ -472,7 +531,7 @@ class Emby(Media):
         for block_session in self._block_sessions:
             self._session_playing_stop(block_session["Id"])
         # 播放
-        return self._player.play(self._play_item["Path"], self._play_item["Container"],
+        return self._player.play(self._play_path, self._play_container,
                                  self.on_message, self.on_play_begin,
                                  self.on_play_in_progress, self.on_play_end)
 
@@ -570,6 +629,8 @@ class Emby(Media):
             except Exception as e:
                 logger.error(f"Exception during av play end: {e}")
         self._play_item = None
+        self._play_path = None
+        self._play_container = None
 
     def start_before(self, **kwargs):
         # 初始化启动其他设备
